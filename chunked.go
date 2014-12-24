@@ -103,12 +103,13 @@ func (r *ChunkedBodyReader) read() {
 				r.ch <- &cbReadResult{err: NewErrorFrom("Read() failed(reading chunk)", err)}
 				return
 			}
-			if n < 0 {
-				panic("unexpected return value: n < 0")
+			if n > 0 {
+				buf.Consume(uint64(n))
+				r.ch <- &cbReadResult{data: buf.Detach()}
+				if size -= uint64(n); size == 0 {
+					break
+				}
 			}
-			buf.Consume(uint64(n))
-			r.ch <- &cbReadResult{data: buf.Detach()}
-			size -= uint64(n)
 		}
 	}
 

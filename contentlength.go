@@ -39,10 +39,7 @@ func (r *ContentLengthReader) Read() (*BodyBlock, error) {
 			Data: buf[:n],
 		}, nil
 	}
-
-	if n <= 0 && r.err == nil {
-		panic("unexpected condition: n <= 0 && r.err == nil")
-	}
+	// condition n == 0, r.err == nil is possible
 
 	return nil, r.err
 }

@@ -76,7 +76,11 @@ func proxy(cconn net.Conn, no int) {
 				return
 			}
 
-			sconn, err = net.Dial("tcp", u.Host+":80")
+			host := u.Host
+			if !hasPort(host) {
+				host = host + ":80"
+			}
+			sconn, err = net.Dial("tcp", host)
 			if err != nil {
 				Println(no, "net.Dial() failed:", err)
 				return
@@ -140,7 +144,7 @@ func WriteRequest(w io.Writer, req *Request) error {
 		}
 	}
 
-	_, err = w.Write(crlf)
+	_, err = writeAll(w, crlf)
 	if err != nil {
 		return err
 	}
@@ -152,7 +156,7 @@ func WriteRequest(w io.Writer, req *Request) error {
 	for {
 		bb, err := req.Body.Read()
 		if bb != nil {
-			_, err := w.Write(bb.Data)
+			_, err := writeAll(w, bb.Data)
 			if err != nil {
 				return err
 			}
@@ -183,21 +187,25 @@ func WriteResponse(w io.Writer, res *Response) error {
 		}
 	}
 
-	if _, err := w.Write(crlf); err != nil {
+	if _, err := writeAll(w, crlf); err != nil {
 		Println("last of headers")
 		return err
+	}
+
+	if res.Body == nil {
+		return nil
 	}
 
 	for {
 		bb, err := res.Body.Read()
 		if bb != nil {
-			n, err := w.Write(bb.Data)
-			if n != len(bb.Data) {
-				panic("n != len(bb.Data)")
-			}
-			if err != nil {
-				Println("write body")
-				return err
+			for len(bb.Data) > 0 {
+				n, err := writeAll(w, bb.Data)
+				if err != nil {
+					Println("write body")
+					return err
+				}
+				bb.Data = bb.Data[n:]
 			}
 		}
 		if err != nil {
@@ -216,7 +224,7 @@ func WriteResponse(w io.Writer, res *Response) error {
 			}
 		}
 
-		if _, err := w.Write(crlf); err != nil {
+		if _, err := writeAll(w, crlf); err != nil {
 			return err
 		}
 	}
@@ -256,5 +264,12 @@ func shouldClose(conn [][]byte, hv *HTTPVersion) bool {
 	}
 
 	// client uses HTTP/1.0
+	return true
+}
+
+func hasPort(s string) bool {
+	if _, _, err := net.SplitHostPort(s); err != nil {
+		return false
+	}
 	return true
 }
