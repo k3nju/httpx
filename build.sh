@@ -1,5 +1,5 @@
 #! /bin/sh
-rm *~ -rf
+rm -rf *~
 go build || exit
 go install || exit
 
