@@ -19,7 +19,7 @@ Content-Length: 1270
 
 `, "\n", "\r\n", -1)
 
-func TestUsage(t *testing.T) {
+func TestHeadersBasicUsage(t *testing.T) {
 	s := newStringLineReader(src)
 
 	// create headers
