@@ -11,10 +11,17 @@ type ContentLengthReader struct {
 }
 
 func NewContentLengthReader(r io.Reader, length uint64) *ContentLengthReader {
-	return &ContentLengthReader{
+	clr := &ContentLengthReader{
 		r:      r,
 		remain: length,
 	}
+
+	if length == 0 {
+		// "Content-Length: 0" is possible case.
+		clr.err = EOB
+	}
+
+	return clr
 }
 
 func (r *ContentLengthReader) Read() (*BodyBlock, error) {

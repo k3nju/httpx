@@ -2,6 +2,8 @@ package httpx
 
 import (
 	"errors"
+	"fmt"
+	"io"
 	"strconv"
 )
 
@@ -60,4 +62,12 @@ func ReadResponse(r Reader, req *Request) (*Response, error) {
 	}
 
 	return res, nil
+}
+
+func DumpResponse(w io.Writer, res *Response) {
+	fmt.Fprintf(w, "%s %d %s", res.HTTPVersion, res.StatusCode, res.ReasonPhrase)
+	for _, line := range res.Headers.List() {
+		fmt.Fprintf(w, "%s\r\n", line)
+	}
+
 }
