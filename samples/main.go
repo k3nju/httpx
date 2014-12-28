@@ -276,7 +276,7 @@ func isPersist(v *httpx.HTTPVersion, headers *httpx.Headers) bool {
 	}
 
 	if v.Major >= 1 && v.Minor >= 1 {
-		return false
+		return true
 	}
 
 	// work around
