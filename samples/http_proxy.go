@@ -11,12 +11,20 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
-var printStdout = false
-var crlf = []byte("\r\n")
+var (
+	CRLF        = []byte("\r\n")
+	PrintStdout = !true
+	PrintDebug  = true
+)
 
 func dprint(v ...interface{}) {
+	if !PrintDebug {
+		return
+	}
+
 	fmt.Println(v...)
 }
 
@@ -41,6 +49,16 @@ func main() {
 
 type clientConn struct {
 	*httpx.BufConn
+}
+
+func (cc *clientConn) SetReadDeadline(t time.Time) {
+	tc := cc.BufConn.C.(*net.TCPConn)
+	tc.SetReadDeadline(t)
+}
+
+func (cc *clientConn) CloseWrite() {
+	tc := cc.BufConn.C.(*net.TCPConn)
+	tc.CloseWrite()
 }
 
 func (cc *clientConn) Close() {
@@ -68,6 +86,8 @@ func handle(cc *clientConn) {
 	}()
 
 	for {
+		cc.SetReadDeadline(time.Now().Add(1 * time.Second))
+
 		dprint("reading request")
 		req, err := httpx.ReadRequest(cc.BufConn)
 		if err != nil {
@@ -86,20 +106,15 @@ func handle(cc *clientConn) {
 		req.RequestTarget = rt
 		dprint("proxy request target:", daddr, req.RequestTarget)
 
-		if sc == nil || sc.daddr != daddr {
-			if sc != nil && sc.daddr != daddr {
-				dprint("closing from", sc.daddr, "connecting to", daddr)
-				sc.Close()
-				sc = nil
-			}
-
-			sc, err = connect(daddr)
-			if err != nil {
-				log.Println(err)
-				break
-			}
-			dprint("connected to", sc.daddr)
+		if sc != nil {
+			sc.Close()
 		}
+		sc, err = connect(daddr)
+		if err != nil {
+			log.Println(err)
+			break
+		}
+		dprint("connected to", sc.daddr)
 
 		dprint("writing request")
 		if err := writeRequest(sc, req); err != nil {
@@ -120,11 +135,6 @@ func handle(cc *clientConn) {
 			break
 		}
 
-		if !isPersist(res.HTTPVersion, res.Headers) {
-			dprint("server side is not persistent connection. closing")
-			sc.Close()
-			sc = nil
-		}
 		if !isPersist(req.HTTPVersion, req.Headers) {
 			dprint("client side is not persistent. closing")
 			break
@@ -133,7 +143,7 @@ func handle(cc *clientConn) {
 }
 
 func writeResponse(w io.Writer, res *httpx.Response) error {
-	if printStdout {
+	if PrintStdout {
 		w = io.MultiWriter(os.Stdout, w)
 	}
 
@@ -153,12 +163,14 @@ func writeResponse(w io.Writer, res *httpx.Response) error {
 }
 
 func writeRequest(w io.Writer, req *httpx.Request) error {
-	if printStdout {
+	if PrintStdout {
 		w = io.MultiWriter(os.Stdout, w)
 	}
 
 	tmp := &bytes.Buffer{}
-	fmt.Fprintf(tmp, "%s %s %s\r\n", req.Method, req.RequestTarget, req.HTTPVersion)
+	// force using HTTP/1.0
+	fmt.Fprintf(tmp, "%s %s HTTP/1.0\r\n", req.Method, req.RequestTarget) //, req.HTTPVersion)
+	req.Headers.Set("Connection", []byte("close"))
 	if err := writeHeaders(tmp, req.Headers); err != nil {
 		return err
 	}
@@ -227,13 +239,13 @@ func write(w io.Writer, buf ...[]byte) error {
 	return nil
 }
 
-func writeHeaders(tmp *bytes.Buffer, headers *httpx.Headers) error {
-	h := bytes.Join(headers.List(), []byte("\r\n"))
-	if err := write(tmp, h, crlf, crlf); err != nil {
-		return err
+func writeHeaders(w io.Writer, headers *httpx.Headers) error {
+	if headers == nil {
+		return write(w, CRLF)
 	}
 
-	return nil
+	h := bytes.Join(headers.List(), []byte("\r\n"))
+	return write(w, h, CRLF, CRLF)
 }
 
 func writeBody(w io.Writer, br httpx.BodyReader) error {
@@ -253,7 +265,7 @@ func writeBody(w io.Writer, br httpx.BodyReader) error {
 	}
 
 	cb, ok := br.(*httpx.ChunkedBodyReader)
-	if !ok || cb.Trailers == nil {
+	if !ok {
 		return nil
 	}
 
