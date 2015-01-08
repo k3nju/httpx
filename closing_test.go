@@ -2,19 +2,18 @@ package httpx
 
 import (
 	"bytes"
-	"io"
 	"os"
 	"strings"
 	"testing"
 )
 
-func testExpectEOF(readRets ...interface{}) bool {
+func testExpectEOB(readRets ...interface{}) bool {
 	bb := readRets[0].(*BodyBlock)
 	if bb != nil {
 		return false
 	}
 	err := readRets[1].(error)
-	if err != io.EOF && err != EOB {
+	if err != EOB {
 		return false
 	}
 
@@ -32,7 +31,7 @@ func TestClosingBasicUsage(t *testing.T) {
 	r := NewClosingReader(f)
 	// "first read call" will read all of data in f.
 	// but first Read() must return "len(bb.Data) > 0 && err == nil"
-	// next Read() will return "bb == nil && err == io.EOF"
+	// next Read() will return "bb == nil && err == EOB"
 	bb, err := r.Read()
 	if err != nil {
 		t.Fatal("expected err == nil, but err ==", err)
@@ -45,8 +44,8 @@ func TestClosingBasicUsage(t *testing.T) {
 	if bb != nil {
 		t.Fatal("expected bb == nil, but bb != nil")
 	}
-	if err != io.EOF {
-		t.Fatal("expected err == io.EOF, but err == nil")
+	if err != EOB {
+		t.Fatal("expected err == EOB, but err == nil")
 	}
 }
 
@@ -57,8 +56,8 @@ func TestClosingNoRead(t *testing.T) {
 	defer f.Close()
 
 	r := NewClosingReader(f)
-	if !testExpectEOF(r.Read()) {
-		t.Fatal("expected EOF, but not.")
+	if !testExpectEOB(r.Read()) {
+		t.Fatal("expected EOB, but not.")
 	}
 }
 
@@ -80,8 +79,8 @@ func TestClosingTwiceRead(t *testing.T) {
 		t.Fatal("expected err == nil, but err ==", err)
 	}
 
-	if !testExpectEOF(r.Read()) {
-		t.Fatal("expected EOF, but not.")
+	if !testExpectEOB(r.Read()) {
+		t.Fatal("expected EOB, but not.")
 	}
 
 	//
@@ -104,7 +103,7 @@ func TestClosingTwiceRead(t *testing.T) {
 	if err != nil {
 		t.Fatal("expected err == nil, but err ==", err)
 	}
-	if !testExpectEOF(r.Read()) {
-		t.Fatal("expected EOF, but not.")
+	if !testExpectEOB(r.Read()) {
+		t.Fatal("expected EOB, but not.")
 	}
 }

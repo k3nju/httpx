@@ -257,7 +257,8 @@ func writeBody(w io.Writer, br httpx.BodyReader) error {
 			}
 		}
 		if err != nil {
-			if err != io.EOF && err != httpx.EOB {
+			if err != httpx.EOB {
+				// insufficient body
 				return err
 			}
 			break

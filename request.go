@@ -1,9 +1,11 @@
 package httpx
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
+	"strings"
 )
 
 var (
@@ -18,6 +20,19 @@ type Request struct {
 	Headers *Headers
 
 	Body BodyReader
+}
+
+func (req *Request) Bytes() []byte {
+	rl := strings.Join([]string{req.Method, req.RequestTarget, req.HTTPVersion.String()}, " ")
+	return bytes.Join(
+		[][]byte{
+			[]byte(rl), // request line
+			bytes.Join( // headers
+				req.Headers.List(),
+				[]byte("\r\n")),
+			[]byte("\r\n"), // last line
+		},
+		[]byte("\r\n"))
 }
 
 func parseRequestLine(line []byte) (string, string, *HTTPVersion, error) {
@@ -69,5 +84,4 @@ func DumpRequest(w io.Writer, req *Request) {
 	for _, line := range req.Headers.List() {
 		fmt.Fprintf(w, "%s\r\n", line)
 	}
-
 }

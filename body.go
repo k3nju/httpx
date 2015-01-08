@@ -6,8 +6,7 @@ import (
 )
 
 var (
-	EOB           = errors.New("end of body")
-	IncompleteEOB = errors.New("incomplete body read")
+	EOB = errors.New("end of body")
 )
 
 const (

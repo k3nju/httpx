@@ -21,8 +21,12 @@ func (r *ClosingReader) Read() (*BodyBlock, error) {
 	}
 
 	buf := make([]byte, DefaultBodyBlockSize)
-	var n int
-	n, r.err = r.r.Read(buf)
+	n, err := r.r.Read(buf)
+	if err == io.EOF {
+		err = EOB
+	}
+	r.err = err
+
 	if n > 0 {
 		return &BodyBlock{
 			Data: buf[:n],

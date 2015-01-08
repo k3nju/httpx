@@ -1,10 +1,12 @@
 package httpx
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
 	"strconv"
+	"strings"
 )
 
 var (
@@ -19,6 +21,24 @@ type Response struct {
 	Headers *Headers
 
 	Body BodyReader
+}
+
+func (res *Response) Bytes() []byte {
+	sl := strings.Join(
+		[]string{
+			res.HTTPVersion.String(),
+			strconv.Itoa(int(res.StatusCode)),
+			res.ReasonPhrase},
+		" ")
+	return bytes.Join(
+		[][]byte{
+			[]byte(sl), // status line
+			bytes.Join( // headers
+				res.Headers.List(),
+				[]byte("\r\n")),
+			[]byte("\r\n"), // last line
+		},
+		[]byte("\r\n"))
 }
 
 func parseStatusLine(line []byte) (*HTTPVersion, uint, string, error) {
@@ -40,7 +60,7 @@ func parseStatusLine(line []byte) (*HTTPVersion, uint, string, error) {
 	return hv, uint(t), string(rp), nil
 }
 
-func ReadResponse(r Reader, req *Request) (*Response, error) {
+func ReadResponseHeader(r Reader) (*Response, error) {
 	line, err := r.ReadLine()
 	if err != nil {
 		return nil, err
@@ -55,6 +75,15 @@ func ReadResponse(r Reader, req *Request) (*Response, error) {
 	res.Headers, err = ReadHeaders(r)
 	if err != nil {
 		return nil, NewErrorFrom("ReadHeaders() failed", err)
+	}
+
+	return res, nil
+}
+
+func ReadResponse(r Reader, req *Request) (*Response, error) {
+	res, err := ReadResponseHeader(r)
+	if err != nil {
+		return nil, err
 	}
 
 	if err := SetResponseBodyReader(res, r, req); err != nil {

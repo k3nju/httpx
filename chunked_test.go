@@ -1,7 +1,7 @@
 package httpx
 
 import (
-	"strings"
+	_ "strings"
 	"testing"
 )
 

@@ -17,8 +17,8 @@ func TestContentLengthBasicUsage(t *testing.T) {
 	}
 
 	// Content-Length(4) have been already read,
-	// second Read() call will return bb == nil and err == io.EOF
-	if !testExpectEOF(r.Read()) {
-		t.Fatal("expected EOF, but not.")
+	// second Read() call will return bb == nil and err == EOB
+	if !testExpectEOB(r.Read()) {
+		t.Fatal("expected EOB, but not.")
 	}
 }
