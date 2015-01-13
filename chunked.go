@@ -146,7 +146,7 @@ func cbReadChunkHeader(lr LineReader) ([]byte, uint64, error) {
 	return line, size, nil
 }
 
-func (r *ChunkedBodyReader) Read() (*BodyBlock, error) {
+func (r *ChunkedBodyReader) Read() ([]byte, error) {
 	if r.err != nil {
 		return nil, r.err
 	}
@@ -166,7 +166,5 @@ func (r *ChunkedBodyReader) Read() (*BodyBlock, error) {
 		return nil, r.err
 	}
 
-	return &BodyBlock{
-		Data: res.data,
-	}, nil
+	return res.data, nil
 }

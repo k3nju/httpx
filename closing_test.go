@@ -8,7 +8,7 @@ import (
 )
 
 func testExpectEOB(readRets ...interface{}) bool {
-	bb := readRets[0].(*BodyBlock)
+	bb := readRets[0].([]byte)
 	if bb != nil {
 		return false
 	}
@@ -30,14 +30,14 @@ func TestClosingBasicUsage(t *testing.T) {
 
 	r := NewClosingReader(f)
 	// "first read call" will read all of data in f.
-	// but first Read() must return "len(bb.Data) > 0 && err == nil"
+	// but first Read() must return "len(bb)" > 0 && err == nil"
 	// next Read() will return "bb == nil && err == EOB"
 	bb, err := r.Read()
 	if err != nil {
 		t.Fatal("expected err == nil, but err ==", err)
 	}
-	if len(bb.Data) > 0 {
-		t.Log(string(bb.Data))
+	if len(bb) > 0 {
+		t.Log(string(bb))
 	}
 
 	bb, err = r.Read()
@@ -72,7 +72,7 @@ func TestClosingTwiceRead(t *testing.T) {
 	//
 	r := NewClosingReader(buf)
 	bb, err := r.Read()
-	if bb == nil || string(bb.Data) != src0 {
+	if bb == nil || string(bb) != src0 {
 		t.Fatal("unexpected result: bb == nil || string(bb.Data) != src0")
 	}
 	if err != nil {
@@ -90,15 +90,15 @@ func TestClosingTwiceRead(t *testing.T) {
 	buf = bytes.NewBufferString(src1)
 	r = NewClosingReader(buf)
 	bb, err = r.Read()
-	if bb == nil || string(bb.Data) != src0 {
-		t.Fatal("unexpected result: bb == nil || string(bb.Data) != src0")
+	if bb == nil || string(bb) != src0 {
+		t.Fatal("unexpected result: bb == nil || string(bb) != src0")
 	}
 	if err != nil {
 		t.Fatal("expected err == nil, but err ==", err)
 	}
 	bb, err = r.Read()
-	if bb == nil || string(bb.Data) != "B" {
-		t.Fatal("bb == nil || string(bb.Data) != \"B\"")
+	if bb == nil || string(bb) != "B" {
+		t.Fatal("bb == nil || string(bb) != \"B\"")
 	}
 	if err != nil {
 		t.Fatal("expected err == nil, but err ==", err)

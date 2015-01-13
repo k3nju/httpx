@@ -24,7 +24,7 @@ func NewContentLengthReader(r io.Reader, length uint64) *ContentLengthReader {
 	return clr
 }
 
-func (r *ContentLengthReader) Read() (*BodyBlock, error) {
+func (r *ContentLengthReader) Read() ([]byte, error) {
 	if r.err != nil {
 		return nil, r.err
 	}
@@ -42,9 +42,7 @@ func (r *ContentLengthReader) Read() (*BodyBlock, error) {
 		if r.remain -= uint64(n); r.remain == 0 {
 			r.err = EOB // for next call
 		}
-		return &BodyBlock{
-			Data: buf[:n],
-		}, nil
+		return buf[:n], nil
 	}
 	// condition n == 0, r.err == nil is possible
 

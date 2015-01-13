@@ -13,12 +13,8 @@ const (
 	DefaultBodyBlockSize = 8192
 )
 
-type BodyBlock struct {
-	Data []byte
-}
-
 type BodyReader interface {
-	Read() (*BodyBlock, error)
+	Read() ([]byte, error)
 }
 
 func SetRequestBodyReader(req *Request, r Reader) error {

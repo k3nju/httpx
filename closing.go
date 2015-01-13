@@ -15,7 +15,7 @@ func NewClosingReader(r io.Reader) *ClosingReader {
 	}
 }
 
-func (r *ClosingReader) Read() (*BodyBlock, error) {
+func (r *ClosingReader) Read() ([]byte, error) {
 	if r.err != nil {
 		return nil, r.err
 	}
@@ -28,9 +28,7 @@ func (r *ClosingReader) Read() (*BodyBlock, error) {
 	r.err = err
 
 	if n > 0 {
-		return &BodyBlock{
-			Data: buf[:n],
-		}, nil
+		return buf[:n], nil
 	}
 
 	return nil, r.err
