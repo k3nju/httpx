@@ -36,7 +36,10 @@ type fieldIndex struct {
 
 type Headers struct {
 	fields [][]byte
-	index  map[string][]*fieldIndex
+	// NOTE: key type of index is string
+	//  []byte can't be key type.
+	//  so, conversion []byte to string(requires memory copy) is necessary cost.
+	index map[string][]*fieldIndex
 }
 
 func (h *Headers) Set(name string, value []byte) {
