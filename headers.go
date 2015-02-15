@@ -42,6 +42,19 @@ type Headers struct {
 	index map[string][]*fieldIndex
 }
 
+func (h *Headers) Bytes() []byte {
+	if h == nil {
+		return nil
+	}
+
+	l := h.List()
+	if l == nil {
+		return nil
+	}
+
+	return bytes.Join(l, []byte("\r\n"))
+}
+
 func (h *Headers) Set(name string, value []byte) {
 	if h == nil {
 		return

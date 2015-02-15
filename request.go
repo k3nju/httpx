@@ -22,17 +22,19 @@ type Request struct {
 	Body BodyReader
 }
 
-func (req *Request) Bytes() []byte {
+func (req *Request) HeaderBytes() []byte {
 	rl := strings.Join([]string{req.Method, req.RequestTarget, req.HTTPVersion.String()}, " ")
 	return bytes.Join(
 		[][]byte{
-			[]byte(rl), // request line
-			bytes.Join( // headers
-				req.Headers.List(),
-				[]byte("\r\n")),
-			[]byte("\r\n"), // last line
+			[]byte(rl),          // request line
+			req.Headers.Bytes(), // headers
+			[]byte("\r\n"),      // last line
 		},
 		[]byte("\r\n"))
+}
+
+func (req *Request) BodyReader() BodyReader {
+	return req.Body
 }
 
 func parseRequestLine(line []byte) (string, string, *HTTPVersion, error) {

@@ -23,7 +23,7 @@ type Response struct {
 	Body BodyReader
 }
 
-func (res *Response) Bytes() []byte {
+func (res *Response) HeaderBytes() []byte {
 	sl := strings.Join(
 		[]string{
 			res.HTTPVersion.String(),
@@ -32,13 +32,15 @@ func (res *Response) Bytes() []byte {
 		" ")
 	return bytes.Join(
 		[][]byte{
-			[]byte(sl), // status line
-			bytes.Join( // headers
-				res.Headers.List(),
-				[]byte("\r\n")),
-			[]byte("\r\n"), // last line
+			[]byte(sl),          // status line
+			res.Headers.Bytes(), // headers
+			[]byte("\r\n"),      // last line
 		},
 		[]byte("\r\n"))
+}
+
+func (res *Response) BodyReader() BodyReader {
+	return res.Body
 }
 
 func parseStatusLine(line []byte) (*HTTPVersion, uint, string, error) {
