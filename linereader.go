@@ -9,6 +9,9 @@ type LineReader interface {
 	ReadLine() ([]byte, error)
 }
 
+//-----------------------------------------------------------------------------------------//
+// for test use
+
 type stringLineReader struct {
 	i     int
 	lines []string
