@@ -148,6 +148,12 @@ func newHeaderField(name, value []byte) ([]byte, int) {
 	return l, n
 }
 
+func NewHeaders() *Headers {
+	return &Headers{
+		index: make(map[string][]*fieldIndex),
+	}
+}
+
 func ReadHeaders(lr LineReader) (*Headers, error) {
 	reachedEOH := false
 	fields := make([][]byte, 0, 20)
