@@ -27,8 +27,8 @@ func (e *Error) Error() string {
 		return e.msg
 	}
 
-	v := []string{e.From.Error(), e.msg}
-	return strings.Join(v, "\n")
+	v := []string{e.msg, e.From.Error()}
+	return strings.Join(v, " caused by error ")
 }
 
 func (e *Error) String() string {
