@@ -42,8 +42,8 @@ func SetRequestBodyReader(req *Request, r Reader) error {
 	return nil
 }
 
-func SetResponseBodyReader(res *Response, r Reader, req *Request) error {
-	if req.Method == "HEAD" {
+func SetResponseBodyReader(res *Response, r Reader, requestedMethod string) error {
+	if requestedMethod == "HEAD" {
 		return nil
 	}
 	if (100 <= res.StatusCode && res.StatusCode <= 100) ||
@@ -52,7 +52,7 @@ func SetResponseBodyReader(res *Response, r Reader, req *Request) error {
 		return nil
 	}
 
-	if req.Method == "CONNECT" && res.StatusCode == 200 {
+	if requestedMethod == "CONNECT" && res.StatusCode == 200 {
 		res.Body = NewClosingReader(r)
 		return nil
 	}

@@ -82,13 +82,13 @@ func ReadResponseHeader(r Reader) (*Response, error) {
 	return res, nil
 }
 
-func ReadResponse(r Reader, req *Request) (*Response, error) {
+func ReadResponse(r Reader, reqMethod string) (*Response, error) {
 	res, err := ReadResponseHeader(r)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := SetResponseBodyReader(res, r, req); err != nil {
+	if err := SetResponseBodyReader(res, r, reqMethod); err != nil {
 		return nil, NewErrorFrom("SetResponseBodyReader() failed", err)
 	}
 
