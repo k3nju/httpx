@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"httpx"
 	"io"
 	"log"
 	"net"
@@ -12,6 +11,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/k3nju/httpx"
 )
 
 var (
@@ -33,7 +34,7 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	dprint("listening...")
+	dprint("listening port 8080...")
 
 	for {
 		c, err := l.Accept()
@@ -123,7 +124,7 @@ func handle(cc *clientConn) {
 		}
 
 		dprint("reading response")
-		res, err := httpx.ReadResponse(sc.BufConn, req)
+		res, err := httpx.ReadResponse(sc.BufConn, req.Method)
 		if err != nil {
 			log.Println(err)
 			break
@@ -250,9 +251,9 @@ func writeHeaders(w io.Writer, headers *httpx.Headers) error {
 
 func writeBody(w io.Writer, br httpx.BodyReader) error {
 	for {
-		bb, err := br.Read()
-		if bb != nil {
-			if err := write(w, bb.Data); err != nil {
+		buf, err := br.Read()
+		if len(buf) > 0 {
+			if err := write(w, buf); err != nil {
 				return err
 			}
 		}
