@@ -1,12 +1,48 @@
 package httpx
 
 import (
+	"bufio"
+	"errors"
 	"io"
 	"strings"
 )
 
+var (
+	ErrLineTooLong = errors.New("line too long")
+)
+
 type LineReader interface {
 	ReadLine() ([]byte, error)
+}
+
+func ReadLine(br *bufio.Reader) ([]byte, error) {
+	tmp, isPrefix, err := br.ReadLine()
+	if err != nil {
+		return nil, err
+	}
+
+	// NOTE: tmp references to inner buffer in bufio.Reader.
+	//       must copy from tmp byte slice to own buffer
+	line := make([]byte, len(tmp))
+	copy(line, tmp)
+
+	if !isPrefix {
+		return line, nil
+	}
+
+	// read continued lines
+	for i := 0; i < 10; i++ {
+		tmp, isPrefix, err := br.ReadLine()
+		if err != nil {
+			return nil, err
+		}
+		line = append(line, tmp...)
+		if !isPrefix {
+			return line, nil
+		}
+	}
+
+	return line, ErrLineTooLong
 }
 
 //-----------------------------------------------------------------------------------------//
